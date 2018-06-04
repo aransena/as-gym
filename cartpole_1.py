@@ -24,3 +24,4 @@ if __name__=='__main__':
             if done:
                 print("Episode finished after {} timesteps with reward {}".format(t+1, tot_reward))
                 break
+
