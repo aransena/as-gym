@@ -70,18 +70,19 @@ if __name__=='__main__':
         observation = env.reset()
         previous_observation = None
         current_observation = None
-
+        inspection_run = False
         for t in range(1000):
             if episodes % check_interval == 0:
+                inspection_run = True
+                env.render()
+            else:
+                inspection_run = False
+
+            if inspection_run:
                 epsilon = 0.0
                 env.render()
-            elif mean_reward < 150.0:
-                # epsilon = min(0.9, max(0.0001, np.exp(-(2.0 * episodes / 10000.0))))
-                epsilon = 0.1
             else:
-                epsilon = 0.0
-
-            # epsilon = min(0.1, max(0.0001, np.exp(-episodes/1000)))
+                epsilon = max(0.01, min(0.5, 1 / (episodes * 1e-3)))
 
             if np.random.random() < epsilon or previous_observation is None:
                 action = env.action_space.sample()  # random action
@@ -89,13 +90,10 @@ if __name__=='__main__':
                 action = MaxAction(Q_table, previous_observation)
 
             observation, reward, done, info = env.step(action)
-            # reward = reward# + observation[0]
-            # rewards.pop(0)
-            # rewards.append(reward)
             current_observation = observation
-            # alpha = min(0.2, max(0.1, np.exp(-mean_reward*2.0/200)))
 
-            if previous_observation is not None:
+            if previous_observation is not None and not inspection_run:
+                alpha = max(0.01, min(0.3, 1 / (episodes * 1e-3)))
                 update = QVal(Q_table, previous_observation, action) + alpha * (
                             reward + gamma * MaxQVal(Q_table, current_observation) - QVal(Q_table, previous_observation,
                                                                                           action))
@@ -119,7 +117,8 @@ if __name__=='__main__':
                 line2.set_ydata(np.asarray(mean_data))
                 line3.set_ydata(np.asarray(alpha_data))
                 line4.set_ydata(np.asarray(epsilon_data))
-                if episodes%check_interval == 0:
+
+                if inspection_run:
                     fig.canvas.draw()
                     plt.pause(0.0001)
 
@@ -127,13 +126,14 @@ if __name__=='__main__':
 
             previous_observation = current_observation
         episodes = episodes + 1
-        #
-        if episodes%check_interval == 0:
+
+        if inspection_run:
             epsilon = epsilon_tmp
-            print observation, epsilon
+
             print("Episode finished after {} timesteps, episode {}, mean reward {}, median {}".format(t + 1, episodes,
                                                                                                       mean_data[
-                                                                                                          nbPoints - 1], np.median(rewards)))
+                                                                                                          nbPoints - 1],
+                                                                                                      np.median(rewards)))
             # output_file = open('Q_table.pkl', 'wb')
             # pickle.dump(Q_table, output_file)
         if mean_reward > 150.0:

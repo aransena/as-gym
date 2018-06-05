@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 costheta_bins = np.arange(-1.0, 1.0, 0.2)
 sintheta_bins = np.arange(-1.0, 1.0, 0.2)
 theta_dot_bins = np.arange(-8.0, 8.0, 0.4)
-action_bins = np.arange(-2.0, 2.0, 0.4)
+action_bins = np.arange(-2.0, 2.0, 0.2)
 
 print "State Space: ", len(costheta_bins)*len(sintheta_bins)*len(theta_dot_bins)*len(action_bins)
 
@@ -41,7 +41,7 @@ if __name__=='__main__':
     Q_table = np.ones((len(costheta_bins), len(sintheta_bins), len(theta_dot_bins), len(action_bins)))
     epsilon = 0.1
     alpha = 0.1
-    gamma = 1.0
+    gamma = 0.999
     t = 0
     check_interval = 5000
     mean_reward = 0.0
@@ -94,7 +94,7 @@ if __name__=='__main__':
                 # epsilon = max(0.0001, 0.8*np.abs(np.sin(episodes*1e-2)))
                 # epsilon = max(0.0001, ((15000 - episodes) / 15000.0) * np.abs(np.sin(episodes * 1e-2)))
                 # epsilon = max(0.01, 0.9-(episodes/5000))
-                epsilon = max(0.001, min(1.0, 1/(episodes*1e-2)))
+                epsilon = max(0.1, min(1.0, 1/(episodes*1e-2)))
 
             if np.random.random() < epsilon or previous_observation is None:
                 action_ind = np.digitize(env.action_space.sample(), action_bins)-1

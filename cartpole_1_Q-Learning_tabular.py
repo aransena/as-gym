@@ -38,7 +38,8 @@ if __name__=='__main__':
 
     actions = [0, 1]
     # Q_table = np.random.random((len(x_bins), len(x_dot_bins), len(theta_bins), len(theta_dot_bins), len(actions)))
-    Q_table = np.zeros((len(x_bins), len(x_dot_bins), len(theta_bins), len(theta_dot_bins), len(actions)))
+    # Q_table = np.zeros((len(x_bins), len(x_dot_bins), len(theta_bins), len(theta_dot_bins), len(actions)))
+    Q_table = np.ones((len(x_bins), len(x_dot_bins), len(theta_bins), len(theta_dot_bins), len(actions)))
     epsilon = 0.1
     alpha = 0.1
     gamma = 1.0
@@ -76,16 +77,23 @@ if __name__=='__main__':
         observation = env.reset()
         previous_observation = None
         current_observation = None
-
-
+        inspection_run = False
         for t in range(1000):
-            if episodes % check_interval == 0:
+
+            if episodes % check_interval == 0:# or (median_reward > -10 and episodes > 100):
+                inspection_run = True
+                env.render()
+            else:
+                inspection_run = False
+
+            if inspection_run:
                 epsilon = 0.0
                 env.render()
-            elif mean_reward < 150.0:
-                epsilon = min(0.9, max(0.0001, np.exp(-(2.0 * episodes / 10000.0))))
+            # elif mean_reward < 150.0:
+            #     epsilon = min(0.9, max(0.0001, np.exp(-(2.0 * episodes / 10000.0))))
             else:
-                epsilon = 0.0
+                # epsilon = 0.0
+                epsilon = max(0.01, min(0.5, 1 / (episodes * 1e-3)))
 
             # epsilon = min(0.1, max(0.0001, np.exp(-episodes/1000)))
 
@@ -99,12 +107,14 @@ if __name__=='__main__':
 
             alpha = min(0.2, max(0.1, np.exp(-mean_reward*2.0/200)))
 
-            if previous_observation is not None:
+            if previous_observation is not None and not inspection_run:
+                alpha = max(0.01, min(0.3, 1 / (episodes * 1e-3)))
                 update = QVal(Q_table, previous_observation, action) + alpha * (
                             reward + gamma * MaxQVal(Q_table, current_observation) - QVal(Q_table, previous_observation,
                                                                                           action))
 
                 QValUpdate(Q_table, previous_observation, action, update)
+
             if done:
                 data.pop(0)
                 data.append(t+1)
@@ -120,7 +130,8 @@ if __name__=='__main__':
                 line2.set_ydata(np.asarray(mean_data))
                 line3.set_ydata(np.asarray(alpha_data))
                 line4.set_ydata(np.asarray(epsilon_data))
-                if episodes%check_interval == 0:
+
+                if inspection_run:
                     fig.canvas.draw()
                     plt.pause(0.0001)
 
@@ -129,7 +140,7 @@ if __name__=='__main__':
             previous_observation = current_observation
         episodes = episodes + 1
         #
-        if episodes%check_interval == 0:
+        if inspection_run:
             epsilon = epsilon_tmp
             print observation, epsilon
             print("Episode finished after {} timesteps, episode {}, mean reward {}, median {}".format(t + 1, episodes,
@@ -137,9 +148,9 @@ if __name__=='__main__':
                                                                                                           nbPoints - 1], np.median(data[nbPoints - 100:nbPoints - 1])))
             # output_file = open('Q_table.pkl', 'wb')
             # pickle.dump(Q_table, output_file)
-        if mean_reward > 150.0:
-            check_interval = 1
-            epsilon = 0.0
+        # if mean_reward > 150.0:
+        #     check_interval = 1
+        #     epsilon = 0.0
 
     plt.ioff()
     print "Final score: ", t
