@@ -9,6 +9,7 @@ x_dot_bins = np.arange(-4.0, 4.0, 0.08)
 theta_bins = np.arange(-42.2, 42.2, 0.08)
 theta_dot_bins = np.arange(-4.0, 4.0, 0.02)
 
+print "State Space: ", len(x_bins)*len(x_dot_bins)*len(theta_bins)*len(theta_dot_bins)*2  # 2 possible actions
 
 def QVal(Q_table, observation, action):
     return Q_table[np.digitize(observation[0], x_bins) - 1][np.digitize(observation[1], x_dot_bins) - 1][

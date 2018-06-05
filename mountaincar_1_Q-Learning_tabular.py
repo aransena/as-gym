@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 x_bins = np.arange(-1.2, 0.6, 0.1)
 x_dot_bins = np.arange(-0.07, 0.07, 0.001)
 
+print "State Space: ", len(x_bins)*len(x_dot_bins)*3  # 3 possible actions
 
 def QVal(Q_table, observation, action):
     return Q_table[np.digitize(observation[0], x_bins) - 1][np.digitize(observation[1], x_dot_bins) - 1][action]
