@@ -1,4 +1,22 @@
 #!/usr/bin/env python
+"""Tabular Q Learning class.
+
+Example:
+    # Initialization example
+    state_bins = [np.arange(-1.0,1.5,0.5),np.arange(-1.0,1.5,0.5)]
+    action_bins = np.arange(0.0,2.0,1.0)
+    TQL = TabularQLearner(state_bins, action_bins, init_vals=0, plotting=True, plot_params=[0, 300, 0, 1])
+
+    # Action selection example
+    action = TQL.get_sample_action()  # random action
+    action = TQL.get_action(state_observation)
+
+    # Q Val update example
+    TQL.update_q(next_state_observation, state_observation, action, reward, alpha, gamma, epsilon)
+
+Contains code to plot reward progress and parameter state.
+"""
+
 import numpy as np
 import gym
 import matplotlib.pyplot as plt
@@ -6,7 +24,25 @@ import pickle
 
 
 class TabularQLearner:
-    def __init__(self, state_bins, action_bins, init_vals=0, plotting=False, plot_params=[0, 1, 0, 1]):
+    def __init__(self, state_bins, action_bins, epsilon=0.1, alpha=0.1, gamma=1.0, init_vals=0, plotting=False, plot_params=[0, 1, 0, 1]):
+        # if callable(epsilon):
+        #     self._get_epsilon = epsilon
+        # else:
+        #     self._get_epsilon = None
+        #     self._epsilon = epsilon
+        #
+        # if callable(alpha):
+        #     self._get_alpha = alpha
+        # else:
+        #     self._get_alpha = None
+        #     self._alpha = alpha
+        #
+        # if callable(gamma):
+        #     self._get_gamma = gamma
+        # else:
+        #     self._get_gamma = None
+        #     self._gamma = gamma
+
         self._state_bins = state_bins
         self._action_bins = action_bins
         self._alpha = 0.0
@@ -81,14 +117,14 @@ class TabularQLearner:
         d_action = self._digitize_action(action)
         self._q_table[d_state][d_action] = update
 
-    def update_q(self, state_observation, prev_observation, action, reward, alpha, gamma, epsilon = 0.0):  # epsilon hacked in here for plotting...
+    def update_q(self, next_state_observation, state_observation, action, reward, alpha, gamma, epsilon = 0.0):  # epsilon hacked in here for plotting...
         self._alpha = alpha
         self._epsilon = epsilon
 
-        update = self._q_val(prev_observation, action) + alpha * (
-                reward + gamma * self._max_qval(state_observation) - self._q_val(prev_observation, action))
+        update = self._q_val(state_observation, action) + alpha * (
+                reward + gamma * self._max_qval(next_state_observation) - self._q_val(state_observation, action))
 
-        self._q_val_update(prev_observation, action, update)
+        self._q_val_update(state_observation, action, update)
 
         if self._plotting:
             self._reward_total = self._reward_total + reward
@@ -133,6 +169,10 @@ class TabularQLearner:
         pickle.dump(self._q_table, output_file)
 
 
+def epsilon_update(episodes):
+    return max(0.01, min(0.5, 1 / (episodes * 1e-3)))
+
+
 if __name__ == '__main__':  # Test run for class
     check_interval = 1000
 
@@ -140,18 +180,19 @@ if __name__ == '__main__':  # Test run for class
     x_dot_bins = np.arange(-4.0, 4.08, 0.08)
     theta_bins = np.arange(-42.2, 42.28, 0.08)
     theta_dot_bins = np.arange(-4.0, 4.02, 0.02)
+
+    state_bins = [x_bins, x_dot_bins, theta_bins, theta_dot_bins]
     action_bins = [0, 1]
 
-    env = gym.make('CartPole-v0')
-    state_bins = [x_bins, x_dot_bins, theta_bins, theta_dot_bins]
+    TQ = TabularQLearner(state_bins, action_bins, epsilon=epsilon_update, init_vals=0, plotting=True, plot_params=[0, 300, 0, 1])
 
-    TQ = TabularQLearner(state_bins, action_bins, init_vals=0, plotting=True, plot_params=[0, 300, 0, 1])
+    env = gym.make('CartPole-v0')
 
     episodes = 0
     while True:
         observation = env.reset()
-        previous_observation = None
-        current_observation = None
+        state_observation = None
+        next_state_observation = None
         inspection_run = False
 
         for t in range(1000):  # episode stops after 200 iterations when done signal is returned below
@@ -168,18 +209,18 @@ if __name__ == '__main__':  # Test run for class
             else:
                 epsilon = max(0.01, min(0.5, 1 / (episodes * 1e-3)))
 
-            if np.random.random() < epsilon or previous_observation is None:
+            if np.random.random() < epsilon or state_observation is None:
                 action = TQ.get_sample_action()  # random action
             else:
-                action = TQ.get_action(previous_observation)
+                action = TQ.get_action(state_observation)
 
-            observation, reward, done, info = env.step(action)
-            current_observation = observation
+            next_state_observation, reward, done, info = env.step(action)
+            #current_observation = observation
 
-            if previous_observation is not None and not inspection_run:
+            if state_observation is not None and not inspection_run:
                 alpha = max(0.01, min(0.3, 1 / (episodes * 1e-3)))
                 gamma = 1.0
-                TQ.update_q(current_observation, previous_observation, action, reward, alpha, gamma, epsilon)
+                TQ.update_q(next_state_observation, state_observation, action, reward, alpha, gamma, epsilon)
 
             if done:
                 TQ.update_plot_data()
@@ -188,7 +229,7 @@ if __name__ == '__main__':  # Test run for class
                     TQ.update_plot()
                 break
 
-            previous_observation = current_observation
+            state_observation = next_state_observation
 
         episodes = episodes + 1
 
