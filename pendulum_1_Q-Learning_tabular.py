@@ -1,13 +1,18 @@
 #!/usr/bin/env python
+"""
+Naive approach to Pendulum-v0.
+State space is digitized to allow learning with a standard tabular Q-Learner.
+"""
+
 import gym
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 
-costheta_bins = np.arange(-1.0, 1.0, 0.2)
-sintheta_bins = np.arange(-1.0, 1.0, 0.2)
-theta_dot_bins = np.arange(-8.0, 8.0, 0.4)
-action_bins = np.arange(-2.0, 2.0, 0.2)
+costheta_bins = np.arange(-1.0, 1.2, 0.2)
+sintheta_bins = np.arange(-1.0, 1.2, 0.2)
+theta_dot_bins = np.arange(-8.0, 8.4, 0.4)
+action_bins = np.arange(-2.0, 2.2, 0.2)
 
 print "State Space: ", len(costheta_bins)*len(sintheta_bins)*len(theta_dot_bins)*len(action_bins)
 
@@ -90,10 +95,6 @@ if __name__=='__main__':
             if inspection_run or (median_reward > -10 and episodes > 100):
                 epsilon = 0.0
             else:
-                epsilon = 0.1
-                # epsilon = max(0.0001, 0.8*np.abs(np.sin(episodes*1e-2)))
-                # epsilon = max(0.0001, ((15000 - episodes) / 15000.0) * np.abs(np.sin(episodes * 1e-2)))
-                # epsilon = max(0.01, 0.9-(episodes/5000))
                 epsilon = max(0.1, min(1.0, 1/(episodes*1e-2)))
 
             if np.random.random() < epsilon or previous_observation is None:
@@ -109,12 +110,9 @@ if __name__=='__main__':
 
             current_observation = observation
 
-            if previous_observation is not None and not inspection_run:# and not (median_reward > -10 and episodes > 100):
-                # alpha = max(0.0001, alpha-(episodes/10000))
-                # alpha = max(0.0001, 0.1*np.abs(np.cos(episodes*1e-2)))
+            if previous_observation is not None and not inspection_run:
                 alpha = max(0.01, min(1.0, 1/(episodes*1e-2)))
 
-                # alpha = max(0.0001, 0.5 * ((5000 - episodes) / 5000.0) * np.abs(np.cos(episodes * 1e-2)))
                 try:
                     update = QVal(Q_table, previous_observation, action_ind) + alpha * (
                                 reward + gamma * MaxQVal(Q_table, current_observation) - QVal(Q_table, previous_observation,
@@ -123,14 +121,9 @@ if __name__=='__main__':
                     print e
                     print action_ind, previous_observation, current_observation
 
-
                 QValUpdate(Q_table, previous_observation, action_ind, update)
 
             previous_observation = current_observation
-
-
-
-                # break
 
         mean_data.pop(0)
         median_data.pop(0)
@@ -154,7 +147,7 @@ if __name__=='__main__':
 
         if episodes % check_interval == 0:# or (median_reward > -10 and episodes > 100):
             fig.canvas.draw()
-            # plt.pause(0.0001)
+
 
         episodes = episodes + 1
         #
@@ -163,11 +156,4 @@ if __name__=='__main__':
                                                                                                       mean_reward, median_reward))
             # output_file = open('Q_table.pkl', 'wb')
             # pickle.dump(Q_table, output_file)
-        # if mean_reward > 150.0:
-        #     check_interval = 1
-        #     epsilon = 0.0
-
-    # plt.ioff()
-    # print "Final score: ", t
-    # print "Num episodes: ", episodes
 

@@ -1,44 +1,54 @@
 #!/usr/bin/env python
+"""
+Naive approach to CartPole-v0.
+State space is digitized to allow learning with a standard tabular Q-Learner.
+"""
+
 import gym
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 
-x_bins = np.arange(-2.5, 2.5, 0.8)
-x_dot_bins = np.arange(-4.0, 4.0, 0.08)
-theta_bins = np.arange(-42.2, 42.2, 0.08)
-theta_dot_bins = np.arange(-4.0, 4.0, 0.02)
+x_bins = np.arange(-2.5, 3.3, 0.8)
+x_dot_bins = np.arange(-4.0, 4.08, 0.08)
+theta_bins = np.arange(-42.2, 42.28, 0.08)
+theta_dot_bins = np.arange(-4.0, 4.02, 0.02)
 
 print "State Space: ", len(x_bins)*len(x_dot_bins)*len(theta_bins)*len(theta_dot_bins)*2  # 2 possible actions
 
-def QVal(Q_table, observation, action):
-    return Q_table[np.digitize(observation[0], x_bins) - 1][np.digitize(observation[1], x_dot_bins) - 1][
-        np.digitize(observation[2], theta_bins) - 1][np.digitize(observation[3], theta_dot_bins) - 1][action]
+
+def digitize_state(state_observation):
+    # digitized state returned as tuple to allow easy indexing below
+    return (np.digitize(state_observation[0], x_bins) - 1, np.digitize(state_observation[1], x_dot_bins) - 1,
+            np.digitize(state_observation[2], theta_bins) - 1, np.digitize(state_observation[3], theta_dot_bins) - 1)
 
 
-def QValUpdate(Q_table, observation, action, update):
-    Q_table[np.digitize(observation[0], x_bins) - 1][np.digitize(observation[1], x_dot_bins) - 1][
-        np.digitize(observation[2], theta_bins) - 1][np.digitize(observation[3], theta_dot_bins) - 1][action] = update
+def q_val(q_table, state_observation, action):
+    d_state = digitize_state(state_observation)
+    return q_table[d_state][action]
 
 
-def MaxQVal(Q_table, observation):
-    return np.amax(Q_table[np.digitize(observation[0], x_bins) - 1][np.digitize(observation[1], x_dot_bins) - 1][
-        np.digitize(observation[2], theta_bins) - 1][np.digitize(observation[3], theta_dot_bins) - 1][:])
+def q_val_update(q_table, state_observation, action, update):
+    d_state = digitize_state(state_observation)
+    q_table[d_state][action] = update
 
 
-def MaxAction(Q_table, observation):
-    return np.argmax(Q_table[np.digitize(observation[0], x_bins) - 1][np.digitize(observation[1], x_dot_bins) - 1][
-                       np.digitize(observation[2], theta_bins) - 1][np.digitize(observation[3], theta_dot_bins) - 1][:])
+def max_q_val(q_table, state_observation):
+    d_state = digitize_state(state_observation)
+    return np.amax(q_table[d_state][:])
 
 
-if __name__=='__main__':
-    # env = gym.make('MountainCar-v0')
+def max_action(q_table, state_observation):
+    d_state = digitize_state(state_observation)
+    return np.argmax(q_table[d_state][:])
+
+
+if __name__ == '__main__':
     env = gym.make('CartPole-v0')
     num_episodes = 10000
 
     actions = [0, 1]
-    # Q_table = np.random.random((len(x_bins), len(x_dot_bins), len(theta_bins), len(theta_dot_bins), len(actions)))
-    # Q_table = np.zeros((len(x_bins), len(x_dot_bins), len(theta_bins), len(theta_dot_bins), len(actions)))
+
     Q_table = np.ones((len(x_bins), len(x_dot_bins), len(theta_bins), len(theta_dot_bins), len(actions)))
     epsilon = 0.1
     alpha = 0.1
@@ -100,7 +110,7 @@ if __name__=='__main__':
             if np.random.random() < epsilon or previous_observation is None:
                 action = env.action_space.sample()  # random action
             else:
-                action = MaxAction(Q_table, previous_observation)
+                action = max_action(Q_table, previous_observation)
 
             observation, reward, done, info = env.step(action)
             current_observation = observation
@@ -109,11 +119,11 @@ if __name__=='__main__':
 
             if previous_observation is not None and not inspection_run:
                 alpha = max(0.01, min(0.3, 1 / (episodes * 1e-3)))
-                update = QVal(Q_table, previous_observation, action) + alpha * (
-                            reward + gamma * MaxQVal(Q_table, current_observation) - QVal(Q_table, previous_observation,
+                update = q_val(Q_table, previous_observation, action) + alpha * (
+                            reward + gamma * max_q_val(Q_table, current_observation) - q_val(Q_table, previous_observation,
                                                                                           action))
 
-                QValUpdate(Q_table, previous_observation, action, update)
+                q_val_update(Q_table, previous_observation, action, update)
 
             if done:
                 data.pop(0)

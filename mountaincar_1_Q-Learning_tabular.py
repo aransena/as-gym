@@ -1,28 +1,43 @@
 #!/usr/bin/env python
+"""
+Naive approach to MountainCar-v0.
+State space is digitized to allow learning with a standard tabular Q-Learner.
+"""
+
 import gym
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 
-x_bins = np.arange(-1.2, 0.6, 0.1)
-x_dot_bins = np.arange(-0.07, 0.07, 0.001)
+x_bins = np.arange(-1.2, 0.7, 0.1)
+x_dot_bins = np.arange(-0.07, 0.071, 0.001)
 
 print "State Space: ", len(x_bins)*len(x_dot_bins)*3  # 3 possible actions
 
-def QVal(Q_table, observation, action):
-    return Q_table[np.digitize(observation[0], x_bins) - 1][np.digitize(observation[1], x_dot_bins) - 1][action]
+
+def digitize_state(state_observation):
+    # digitized state returned as tuple to allow easy indexing below
+    return (np.digitize(state_observation[0], x_bins) - 1, np.digitize(state_observation[1], x_dot_bins) - 1)
 
 
-def QValUpdate(Q_table, observation, action, update):
-    Q_table[np.digitize(observation[0], x_bins) - 1][np.digitize(observation[1], x_dot_bins) - 1][action] = update
+def q_val(q_table, state_observation, action):
+    d_state = digitize_state(state_observation)
+    return q_table[d_state][action]
 
 
-def MaxQVal(Q_table, observation):
-    return np.amax(Q_table[np.digitize(observation[0], x_bins) - 1][np.digitize(observation[1], x_dot_bins) - 1][:])
+def q_val_update(q_table, state_observation, action, update):
+    d_state = digitize_state(state_observation)
+    q_table[d_state][action] = update
 
 
-def MaxAction(Q_table, observation):
-    return np.argmax(Q_table[np.digitize(observation[0], x_bins) - 1][np.digitize(observation[1], x_dot_bins) - 1][:])
+def max_qval(q_table, state_observation):
+    d_state = digitize_state(state_observation)
+    return np.amax(q_table[d_state][:])
+
+
+def max_action(q_table, state_observation):
+    d_state = digitize_state(state_observation)
+    return np.argmax(q_table[d_state][:])
 
 
 if __name__=='__main__':
@@ -30,7 +45,7 @@ if __name__=='__main__':
     num_episodes = 10000
 
     actions = [0, 1, 2]
-    Q_table = np.zeros((len(x_bins), len(x_dot_bins), len(actions)))
+    qtable = np.zeros((len(x_bins), len(x_dot_bins), len(actions)))
     epsilon = 0.1
     alpha = 0.1
     gamma = 1.0
@@ -65,13 +80,16 @@ if __name__=='__main__':
     mean_reward = 0.0
     rewards = [0.0]*100
     rewards_plot = [0.0] * nbPoints
+
     while True:
 
         observation = env.reset()
         previous_observation = None
         current_observation = None
         inspection_run = False
-        for t in range(1000):
+
+        for t in range(1000):  # episode stops after 200 iterations when done signal is returned below
+
             if episodes % check_interval == 0:
                 inspection_run = True
                 env.render()
@@ -87,18 +105,19 @@ if __name__=='__main__':
             if np.random.random() < epsilon or previous_observation is None:
                 action = env.action_space.sample()  # random action
             else:
-                action = MaxAction(Q_table, previous_observation)
+                action = max_action(qtable, previous_observation)
 
             observation, reward, done, info = env.step(action)
             current_observation = observation
 
             if previous_observation is not None and not inspection_run:
                 alpha = max(0.01, min(0.3, 1 / (episodes * 1e-3)))
-                update = QVal(Q_table, previous_observation, action) + alpha * (
-                            reward + gamma * MaxQVal(Q_table, current_observation) - QVal(Q_table, previous_observation,
-                                                                                          action))
+                update = q_val(qtable, previous_observation, action) + alpha * (
+                            reward + gamma * max_qval(qtable, current_observation) - q_val(qtable,
+                                                                                           previous_observation,
+                                                                                           action))
 
-                QValUpdate(Q_table, previous_observation, action, update)
+                q_val_update(qtable, previous_observation, action, update)
             if done:
                 rewards.pop(0)
                 rewards.append(-(t+1))
@@ -134,13 +153,3 @@ if __name__=='__main__':
                                                                                                       mean_data[
                                                                                                           nbPoints - 1],
                                                                                                       np.median(rewards)))
-            # output_file = open('Q_table.pkl', 'wb')
-            # pickle.dump(Q_table, output_file)
-        if mean_reward > 150.0:
-            check_interval = 1
-            epsilon = 0.0
-
-    plt.ioff()
-    print "Final score: ", t
-    print "Num episodes: ", episodes
-
