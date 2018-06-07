@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Naive approach to MountainCar-v0.
+Naive approach to BipedalWalker-v2.
 State space is digitized to allow learning with a standard tabular Q-Learner.
 """
 
@@ -9,21 +9,23 @@ import numpy as np
 from TabularQLearner import TabularQLearner
 
 
-if __name__ == '__main__':  # Test run for class
-    check_interval = 1000
+if __name__ == '__main__':
+    ## Setup gym
+    env = gym.make('LunarLander-v2')
 
-    x_bins = np.arange(-1.2, 0.7, 0.1)
-    x_dot_bins = np.arange(-0.07, 0.071, 0.001)
+    ## Tabular Q Learner Setup
+    d0 = np.arange(-1.0, 1.5, 0.5)
+    a1 = [0, 1, 2, 3]
 
-    state_bins = [x_bins, x_dot_bins]
-    action_bins = [0, 1, 2]
+    state_bins = [d0]*8
 
-    TQL = TabularQLearner(state_bins, action_bins, init_vals=0, plotting=True, plot_params=[-200, 0, 0, 1])
-    TQL.set_gamma(1.0)
-
-    env = gym.make('MountainCar-v0')
-
+    TQL1 = TabularQLearner(state_bins, a1, action_type=str(env.action_space),
+                          init_vals=0, plotting=True, plot_params=[-600, 600, 0, 1])
+    TQL1.set_gamma(1.0)
+    
     episodes = 0
+    check_interval = 5000
+
     while True:
         env.reset()
         state_observation = None
@@ -42,23 +44,27 @@ if __name__ == '__main__':  # Test run for class
                 epsilon = 0.0
                 env.render()
             else:
-                epsilon = max(0.01, min(0.5, 1 / (episodes * 1e-3)))
+                epsilon = max(0.01, min(0.5, 1 / (episodes * 1e-2)))
 
-            TQL.set_epsilon(epsilon)
-            action = TQL.get_action()  # random action
+            TQL1.set_epsilon(epsilon)
 
-            next_state_observation, reward, done, info = env.step(action)
+            a1 = TQL1.get_action(state_observation)  # returns random action if no observation passed
+
+            next_state_observation, reward, done, info = env.step(a1)
 
             if state_observation is not None and next_state_observation is not None and not inspection_run:
-                alpha = max(0.01, min(0.3, 1 / (episodes * 1e-3)))
-                TQL.set_alpha(alpha)
-                TQL.update_q(next_state_observation, state_observation, action, reward)
+                alpha = max(0.01, min(0.3, 1 / (episodes * 1e-2)))
+                TQL1.set_alpha(alpha)
+                TQL1.update_q(next_state_observation, state_observation, a1, reward)
 
             if done:
-                TQL.update_plot_data()
+                TQL1.update_plot_data()
+
                 if inspection_run:
                     print("Episode finished after {} timesteps, episode {}".format(t + 1, episodes))
-                    TQL.update_plot()
+                    TQL1.update_plot(episodes)
+                    check_interval = max(100, check_interval - 1000)
+
                 break
 
             state_observation = next_state_observation

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Naive approach to CartPole-v0.
+Naive approach to InvertedPendulum-v2.
 State space is digitized to allow learning with a standard tabular Q-Learner.
 """
 
@@ -10,7 +10,7 @@ from TabularQLearner import TabularQLearner
 
 
 if __name__ == '__main__':  # Test run for class
-    check_interval = 1000
+    check_interval = 500
 
     x_bins = np.arange(-2.5, 3.3, 0.8)
     x_dot_bins = np.arange(-4.0, 4.08, 0.08)
@@ -22,7 +22,8 @@ if __name__ == '__main__':  # Test run for class
 
     TQL = TabularQLearner(state_bins, action_bins, init_vals=0, plotting=True, plot_params=[0, 300, 0, 1])
     TQL.set_gamma(1.0)
-    env = gym.make('CartPole-v0')
+    env = gym.make('InvertedPendulum-v2')
+    print env.action_space, env.observation_space
 
     episodes = 0
 
@@ -48,7 +49,7 @@ if __name__ == '__main__':  # Test run for class
 
             TQL.set_epsilon(epsilon)
 
-            action = TQL.get_action()  # returns random action if no observation passed
+            action = TQL.get_action(state_observation)  # returns random action if no observation passed
 
             next_state_observation, reward, done, info = env.step(action)
 
@@ -61,7 +62,7 @@ if __name__ == '__main__':  # Test run for class
                 TQL.update_plot_data()
                 if inspection_run:
                     print("Episode finished after {} timesteps, episode {}".format(t + 1, episodes))
-                    TQL.update_plot()
+                    TQL.update_plot(episodes)
                 break
 
             state_observation = next_state_observation
