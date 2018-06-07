@@ -4,29 +4,28 @@ Naive approach to CartPole-v0.
 State space is digitized to allow learning with a standard tabular Q-Learner.
 """
 
-import gym
 import numpy as np
+import gym
 from TabularQLearner import TabularQLearner
-import pickle
-import matplotlib.pyplot as plt
-
-
 
 
 if __name__ == '__main__':  # Test run for class
     check_interval = 1000
 
-    x_bins = np.arange(-1.2, 0.7, 0.1)
-    x_dot_bins = np.arange(-0.07, 0.071, 0.001)
+    x_bins = np.arange(-2.5, 3.3, 0.8)
+    x_dot_bins = np.arange(-4.0, 4.08, 0.08)
+    theta_bins = np.arange(-42.2, 42.28, 0.08)
+    theta_dot_bins = np.arange(-4.0, 4.02, 0.02)
 
-    state_bins = [x_bins, x_dot_bins]
-    action_bins = [0, 1, 2]
+    state_bins = [x_bins, x_dot_bins, theta_bins, theta_dot_bins]
+    action_bins = [0, 1]
 
-    TQ = TabularQLearner(state_bins, action_bins, init_vals=0, plotting=True, plot_params=[-200, 0, 0, 1])
-
-    env = gym.make('MountainCar-v0')
+    TQL = TabularQLearner(state_bins, action_bins, init_vals=0, plotting=True, plot_params=[0, 300, 0, 1])
+    TQL.set_gamma(1.0)
+    env = gym.make('CartPole-v0')
 
     episodes = 0
+
     while True:
         observation = env.reset()
         state_observation = None
@@ -47,26 +46,25 @@ if __name__ == '__main__':  # Test run for class
             else:
                 epsilon = max(0.01, min(0.5, 1 / (episodes * 1e-3)))
 
-            if np.random.random() < epsilon or state_observation is None:
-                action = TQ.get_sample_action()  # random action
-            else:
-                action = TQ.get_action(state_observation)
+            TQL.set_epsilon(epsilon)
+
+            action = TQL.get_action()  # returns random action if no observation passed
 
             next_state_observation, reward, done, info = env.step(action)
-            #current_observation = observation
 
             if state_observation is not None and not inspection_run:
                 alpha = max(0.01, min(0.3, 1 / (episodes * 1e-3)))
-                gamma = 1.0
-                TQ.update_q(next_state_observation, state_observation, action, reward, alpha, gamma, epsilon)
+                TQL.set_alpha(alpha)
+                TQL.update_q(next_state_observation, state_observation, action, reward)
 
             if done:
-                TQ.update_plot_data()
+                TQL.update_plot_data()
                 if inspection_run:
                     print("Episode finished after {} timesteps, episode {}".format(t + 1, episodes))
-                    TQ.update_plot()
+                    TQL.update_plot()
                 break
 
             state_observation = next_state_observation
 
         episodes = episodes + 1
+

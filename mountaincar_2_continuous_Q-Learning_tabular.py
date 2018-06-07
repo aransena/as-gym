@@ -47,8 +47,6 @@ if __name__=='__main__':
     num_episodes = 10000
 
     actions = [0, 1, 2]
-    # Q_table = np.zeros((len(x_bins), len(x_dot_bins), len(action_bins)))
-    # Q_table = np.ones((len(x_bins), len(x_dot_bins), len(action_bins)))
     Q_table = np.random.random((len(x_bins), len(x_dot_bins), len(action_bins)))
     epsilon = 0.1
     alpha = 0.1

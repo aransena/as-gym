@@ -115,7 +115,7 @@ if __name__ == '__main__':
             observation, reward, done, info = env.step(action)
             current_observation = observation
 
-            alpha = min(0.2, max(0.1, np.exp(-mean_reward*2.0/200)))
+            # alpha = min(0.2, max(0.1, np.exp(-mean_reward*2.0/200)))
 
             if previous_observation is not None and not inspection_run:
                 alpha = max(0.01, min(0.3, 1 / (episodes * 1e-3)))

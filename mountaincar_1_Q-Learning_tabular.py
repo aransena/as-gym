@@ -6,7 +6,6 @@ State space is digitized to allow learning with a standard tabular Q-Learner.
 
 import gym
 import numpy as np
-import pickle
 import matplotlib.pyplot as plt
 
 x_bins = np.arange(-1.2, 0.7, 0.1)
