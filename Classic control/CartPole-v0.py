@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 """
-Naive approach to InvertedPendulum-v2.
+Naive approach to CartPole-v0.
 State space is digitized to allow learning with a standard tabular Q-Learner.
 """
 
 import numpy as np
 import gym
-from TabularQLearner import TabularQLearner
-
+from agents.TabularQLearner import TabularQLearner
 
 if __name__ == '__main__':  # Test run for class
     check_interval = 500
@@ -22,8 +21,7 @@ if __name__ == '__main__':  # Test run for class
 
     TQL = TabularQLearner(state_bins, action_bins, init_vals=0, plotting=True, plot_params=[0, 300, 0, 1])
     TQL.set_gamma(1.0)
-    env = gym.make('InvertedPendulum-v2')
-    print env.action_space, env.observation_space
+    env = gym.make('CartPole-v0')
 
     episodes = 0
 

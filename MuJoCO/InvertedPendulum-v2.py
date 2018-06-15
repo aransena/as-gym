@@ -1,28 +1,49 @@
-#!/usr/bin/env python
-"""
-Naive approach to CartPole-v0.
+#!/usr/bin/env python3.6
+"""NOTE: python3.6
+Naive approach to InvertedPendulum-v2.
 State space is digitized to allow learning with a standard tabular Q-Learner.
 """
 
 import numpy as np
 import gym
-from TabularQLearner import TabularQLearner
-
+from agents.TabularQLearner import TabularQLearner
 
 if __name__ == '__main__':  # Test run for class
     check_interval = 500
 
-    x_bins = np.arange(-2.5, 3.3, 0.8)
-    x_dot_bins = np.arange(-4.0, 4.08, 0.08)
-    theta_bins = np.arange(-42.2, 42.28, 0.08)
-    theta_dot_bins = np.arange(-4.0, 4.02, 0.02)
+    env = gym.make('InvertedPendulum-v2')
+    state_bins = []
+    state_step = 0.2
 
-    state_bins = [x_bins, x_dot_bins, theta_bins, theta_dot_bins]
-    action_bins = [0, 1]
+    print(env.observation_space.high, env.observation_space.low, env.action_space.high, env.action_space.low)
+    if np.inf in env.observation_space.high:
+        env.render()
+        env.reset()
+        observations = []
+        for i in range(0, 10000):
+            next_state_observation, reward, done, info = env.step(env.action_space.sample())
+            observations.append(next_state_observation)
+
+        # print(np.asarray(observations))
+
+        for col in range(0, np.shape(np.asarray(observations))[1]):
+
+            ob_max = np.max(np.asarray(observations)[:, col])
+            ob_min = np.min(np.asarray(observations)[:, col])
+            pad = 1.1
+            state_bins.append(np.arange(ob_min*pad, ob_max*pad+state_step, state_step))
+
+    action_bins = np.arange(-3.0, 3.5, 0.5)
 
     TQL = TabularQLearner(state_bins, action_bins, init_vals=0, plotting=True, plot_params=[0, 300, 0, 1])
     TQL.set_gamma(1.0)
-    env = gym.make('CartPole-v0')
+
+    # for i in range(0,10):
+    #     print(env.action_space.sample())
+    #
+    # quit()
+
+    print(env.action_space, env.observation_space)
 
     episodes = 0
 

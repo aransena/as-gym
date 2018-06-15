@@ -47,7 +47,7 @@ class TabularQLearner:
         else:
             self._q_table = np.random.random(dims)
 
-        print "Problem state space {}".format(np.size(self._q_table))
+        print("Problem state space {}".format(np.size(self._q_table)))
         self._plotting = plotting
 
         if self._plotting:
@@ -133,6 +133,7 @@ class TabularQLearner:
         if self._plotting:
             self._reward_total = self._reward_total + reward
 
+
     def get_action(self, state_observation=None, greedy=False):
         action = None
         if greedy and state_observation is not None:
@@ -151,23 +152,24 @@ class TabularQLearner:
             return action
 
     def update_plot_data(self):
-        self._reward_data.pop(0)
-        self._reward_data.append(self._reward_total)
-        self._reward_total = 0.0
+        if self._plotting:
+            self._reward_data.pop(0)
+            self._reward_data.append(self._reward_total)
+            self._reward_total = 0.0
 
-        mean_reward = np.mean(self._reward_data[-100:-1])
-        median_reward = np.median(self._reward_data[-100:-1])
+            mean_reward = np.mean(self._reward_data[-100:-1])
+            median_reward = np.median(self._reward_data[-100:-1])
 
-        self._mean_data.pop(0)
-        self._mean_data.append(mean_reward)
-        self._median_data.pop(0)
-        self._median_data.append(median_reward)
-        self._alpha_data.pop(0)
-        self._alpha_data.append(self._alpha)
-        self._epsilon_data.pop(0)
-        self._epsilon_data.append(self._epsilon)
-        self._gamma_data.pop(0)
-        self._gamma_data.append(self._gamma)
+            self._mean_data.pop(0)
+            self._mean_data.append(mean_reward)
+            self._median_data.pop(0)
+            self._median_data.append(median_reward)
+            self._alpha_data.pop(0)
+            self._alpha_data.append(self._alpha)
+            self._epsilon_data.pop(0)
+            self._epsilon_data.append(self._epsilon)
+            self._gamma_data.pop(0)
+            self._gamma_data.append(self._gamma)
 
     def update_plot(self, episodes=0):
         min_reward = np.min(self._reward_data[-100:-1])

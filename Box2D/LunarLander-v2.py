@@ -6,8 +6,7 @@ State space is digitized to allow learning with a standard tabular Q-Learner.
 
 import gym
 import numpy as np
-from TabularQLearner import TabularQLearner
-
+from agents.TabularQLearner import TabularQLearner
 
 if __name__ == '__main__':
     ## Setup gym
