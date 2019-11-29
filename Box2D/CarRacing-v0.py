@@ -12,9 +12,9 @@ from agents.TabularQLearner import TabularQLearner
 if __name__ == '__main__':
     ## Setup gym
     env = gym.make('CarRacing-v0')
-    for i in range(0,10):
+    for i in range(0, 10):
         if __name__ == '__main__':
-            print env.action_space.sample()
+            print(env.action_space.sample())
     ## Tabular Q Learner Setup
     d0 = np.arange(0.0, 200.0, 50.0)
     a1 = np.arange(-1.0, 1.5, 0.5)
@@ -42,7 +42,7 @@ if __name__ == '__main__':
         next_state_observation = None
         inspection_run = False
         if episodes%10 == 0:
-            print "Episode ", episodes, "..."
+            print("Episode ", episodes, "...")
 
         for t in range(1000):  # episode stops after 200 iterations when done signal is returned below
 

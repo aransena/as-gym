@@ -58,8 +58,12 @@ if __name__ == '__main__':  # Test run for class
                 if inspection_run:
                     print("Episode finished after {} timesteps, episode {}".format(t + 1, episodes))
                     TQL.update_plot(episodes)
+
                 break
 
             state_observation = next_state_observation
+
+            # if inspection_run and episodes > 0:
+            #     break
 
         episodes = episodes + 1

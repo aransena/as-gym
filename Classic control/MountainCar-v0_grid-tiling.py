@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Naive approach to MountainCar-v0.
+SARSA Code Tiling approach to MountainCar-v0.
 State space is digitized to allow learning with a standard tabular Q-Learner.
 """
 
@@ -10,7 +10,6 @@ from scipy.interpolate import interp1d
 from tools.TileCoding import IHT, tiles
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
-
 
 if __name__ == '__main__':
     # fig, ax = plt.subplots()
@@ -22,8 +21,8 @@ if __name__ == '__main__':
 
     iht = IHT(max_size)
 
-    QVals = np.zeros((max_size, 3))#np.asarray(np.asarray([0]*1024), np.asarray([0,1,2]))
-
+    QVals = np.random.random((max_size, 3))#np.asarray(np.asarray([0]*1024), np.asarray([0,1,2]))
+    # QVals = QVals - 1.0
     env = gym.make('MountainCar-v0')
 
     d1_scale = interp1d([-1.2, 0.6], [0, 9])
@@ -32,7 +31,7 @@ if __name__ == '__main__':
 
     episodes = 0
 
-    check_interval = 2000
+    check_interval = 20000
     rewards =[]
     while True:
         env.reset()
@@ -46,7 +45,7 @@ if __name__ == '__main__':
         indices = None
         reward_tot = 0.0
         for t in range(1000):
-            epsilon = max(0.01, epsilon - 0.01)
+            epsilon = max(0.01, epsilon - 0.001)
             if episodes%check_interval == 0.0:
                 env.render()
 
@@ -105,3 +104,4 @@ if __name__ == '__main__':
             plt.scatter(range(0, len(rewards)), np.asarray(rewards)[:])
             plt.show()
         episodes = episodes + 1
+

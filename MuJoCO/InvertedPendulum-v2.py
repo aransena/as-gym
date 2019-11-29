@@ -9,7 +9,6 @@ import gym
 from agents.TabularQLearner import TabularQLearner
 
 if __name__ == '__main__':  # Test run for class
-    check_interval = 500
 
     env = gym.make('InvertedPendulum-v2')
     state_bins = []
@@ -46,6 +45,8 @@ if __name__ == '__main__':  # Test run for class
     print(env.action_space, env.observation_space)
 
     episodes = 0
+
+    check_interval = 5000
 
     while True:
         observation = env.reset()

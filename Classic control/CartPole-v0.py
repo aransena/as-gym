@@ -9,7 +9,7 @@ import gym
 from agents.TabularQLearner import TabularQLearner
 
 if __name__ == '__main__':  # Test run for class
-    check_interval = 500
+    check_interval = 1000
 
     x_bins = np.arange(-2.5, 3.3, 0.8)
     x_dot_bins = np.arange(-4.0, 4.08, 0.08)
